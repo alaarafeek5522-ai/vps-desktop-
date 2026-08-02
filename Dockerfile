@@ -2,6 +2,7 @@ FROM --platform=linux/amd64 ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# 1. التحديث والأدوات الأساسية
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
     xfce4 xfce4-goodies \
@@ -14,21 +15,23 @@ RUN apt-get update -y && \
     nodejs npm \
     htop screen tmux \
     openssh-server \
-    firefox \
     && rm -rf /var/lib/apt/lists/*
 
+# 2. إعداد SSH
 RUN mkdir -p /var/run/sshd && \
     echo 'root:root123' | chpasswd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
+# 3. Firefox من PPA
 RUN add-apt-repository ppa:mozillateam/ppa -y && \
     apt-get update -y && \
-    apt-get install -y firefox && \
+    apt-get install -y --no-install-recommends firefox && \
     rm -rf /var/lib/apt/lists/*
 
+# 4. الثيم والخلفية
 RUN apt-get update -y && \
-    apt-get install -y xubuntu-icon-theme git && \
+    apt-get install -y --no-install-recommends xubuntu-icon-theme git && \
     git clone --depth 1 https://github.com/B00merang-Project/Windows-10.git /usr/share/themes/Windows-10 && \
     git clone --depth 1 https://github.com/B00merang-Project/Windows-10-Icons.git /usr/share/icons/Windows-10 && \
     mkdir -p /etc/xdg/autostart && \
@@ -38,18 +41,22 @@ RUN apt-get update -y && \
     echo "Name=Set Win Theme" >> /etc/xdg/autostart/set-win-theme.desktop && \
     rm -rf /var/lib/apt/lists/*
 
+# 5. الخلفية
 RUN mkdir -p /usr/share/backgrounds/xfce /usr/share/xfce4/backdrops && \
     wget --no-check-certificate "https://b.top4top.io/p_3853l6za61.jpg" -O /usr/share/backgrounds/custom.jpg && \
     find /usr/share/backgrounds/ /usr/share/xfce4/backdrops/ -type f \( -iname "*.jpg" -o -iname "*.png" -o -iname "*.svg" \) -exec cp /usr/share/backgrounds/custom.jpg {} \;
 
+# 6. VNC باسورد
 RUN mkdir -p /root/.vnc && \
     echo "masa123" | vncpasswd -f > /root/.vnc/passwd && \
     chmod 600 /root/.vnc/passwd && \
     touch /root/.Xauthority
 
+# 7. noVNC redirect
 RUN echo '<meta http-equiv="refresh" content="0; url=vnc.html?autoconnect=true&resize=scale&password=masa123">' > /usr/share/novnc/index.html && \
     echo '<meta http-equiv="refresh" content="0; url=vnc.html?autoconnect=true&resize=scale&password=masa123">' > /usr/share/novnc/vnc_lite.html
 
+# 8. سكربت التشغيل
 RUN echo '#!/bin/bash\n\
 vncserver -localhost no -geometry 1920x1080 -depth 24 :1 &\n\
 /usr/sbin/sshd\n\
